@@ -11,6 +11,7 @@ from server import ReplicationServer
 
 # expects osmx to be on the PATH.
 osmx = 'osmx'
+osmconvert = 'osmconvert'
 
 try:
   file = open('/tmp/osmx.lock','w')
@@ -41,6 +42,13 @@ try:
     fd, path = tempfile.mkstemp(suffix='.osc.gz')
     with open(fd,'wb') as f:
       f.write(s.get_diff_block(current_id))
+
+    if len(sys.argv) > 3:
+      filtered_path = tempfile.mktemp(suffix='.osc', prefix='filtered')
+      subprocess.check_call([osmconvert,'-B='+sys.argv[3],path,'-o='+filtered_path])
+      os.unlink(path)
+      path = filtered_path
+
     info = s.get_state_info(current_id)
     timestamp = info.timestamp.strftime('%Y-%m-%dT%H:%M:%SZ')
     subprocess.check_call([osmx,'update',sys.argv[1],path,str(current_id),timestamp,'--commit'])
